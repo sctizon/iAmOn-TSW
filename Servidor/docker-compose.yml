@@ -1,0 +1,45 @@
+version: "3.8"
+services:
+  db:
+    container_name: db
+    image: postgres:12
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/init/:/docker-entrypoint-initdb.d
+  web-server:
+    container_name: web-server
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "8080:80"
+    volumes:
+      - ./php/src:/var/www/html
+      - ./php/lib:/var/www/html/lib
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    depends_on:
+      - db
+  mail:
+    container_name: mail
+    build:
+      context: .
+      dockerfile: Dockerfile.mail
+      args:
+        EMAIL: ${EMAIL}
+        EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+        MAIL_NAME: ${MAIL_NAME}
+        SMTP_DOMAIN: ${SMTP_DOMAIN}
+        SMTP_PORT: ${SMTP_PORT}
+    ports:
+      - ${PORT}:25
